@@ -17,13 +17,28 @@ By default the clipped content will be neatly formatted in Markdown. But the dat
 
 ***This project is not endorsed or authorised in any way by Slack Technologies LLC.***
 
+# Installation
+
+    pip install slackclipper
+
+This will install the `slackclipper` library for advanced use within Slack, but also installs a convenience executable by the same name, so you can run it directly from the command line.
+
 # Usage
 
 1. Copy the link to the thread in Slack.
-    - ![Screenshot of "Copy link" in Slack](img/screenshot_copy-link-in-Slack.png)
+![Screenshot of "Copy link" in Slack](img/screenshot_copy-link-in-Slack.png)
 2. Run `slackclipper` in your Terminal.
+![Screencast of "slackclipper" in Terminal](img/screencast.gif)
 3. Paste the result into the destination of your choice.
+![Screenshot of content pasted into MacDown](img/screenshot_paste-into-MacDown.png)
 
-# Details
 
 # Shortcomings
+
+- Message authors are given as a user ID. This is easy to improve by doing a user lookup to turn them into a useful name.
+- Timestamps are not yet included in the output. Just need to come up with a suitable format.
+- Some things aren't formatted well. For example:
+	- links are oddly formatted;
+	- mentions and emoticons aren’t;
+	- and multimedia won’t come through well.
+- Only exports to MarkDown for now.
