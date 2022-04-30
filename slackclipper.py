@@ -97,7 +97,7 @@ def parse_slack_message_link(link):
 
   For example:
 
-      https://newwwie.slack.com/archives/C96PDSJ7J/p1651213905220139
+      https://newwwie.slack.com/archives/C03FH4UM3/p1650893759330519
   
   This function accepts a string containing such a link, and returns the
   workspace url, channel ID and timestamp extracted, each in a format accepted
@@ -193,34 +193,17 @@ def get_thread_content(link):
 
 
 def main():
-  # Tried the tkinter method but was rough as guts.
+  # Tried the tkinter method but it was rough as guts.
   # No big deal to have this dependency.
   from pyperclip import copy, paste
   
   try:
+    link = paste()
+    print(f"Clipping thread for link: {link}")
     content = get_thread_content(paste())
     copy(content)
-    print("Done.")
+    print("Done. Results are on the clipboard ready to be pasted wherever you like.")
   except Exception as e:
-    print(f"Failed: {e}")
-    raise # for debugging
-
-
-def main1():
-  # Seems like a heavy way to get the clipboard, but that's what the Internet says.
-  from tkinter import Tk
-  tk = Tk()
-  tk.withdraw()
-  
-  try:
-    content = get_thread_content(tk.clipboard_get())
-    
-    tk.clipboard_clear()
-    tk.clipboard_append(content)
-    print("Done. Results are on the clipboard.")
-  except Exception as e:
-    print(f"Failed: {e}")
-    raise
-  finally:
-    tk.update() # now it stays on the clipboard after the window is closed
-    tk.destroy()
+    print(f"Failed. Details of error are below.")
+    print(str(e))
+    #raise # for debugging

@@ -20,7 +20,7 @@ By default the clipped content will be neatly formatted in Markdown. But the dat
 # Usage
 
 1. Copy the link to the thread in Slack.
-  - ![Screenshot of "Copy link" in Slack](screenshot_copy-link-in-Slack.png)
+    - ![Screenshot of "Copy link" in Slack](img/screenshot_copy-link-in-Slack.png)
 2. Run `slackclipper` in your Terminal.
 3. Paste the result into the destination of your choice.
 
