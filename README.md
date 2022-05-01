@@ -21,7 +21,7 @@ By default the clipped content will be neatly formatted in Markdown. But the dat
 
     pip install slackclipper
 
-This will install the `slackclipper` library for advanced use within Slack, but also installs a convenience executable by the same name, so you can run it directly from the command line.
+This will install the `slackclipper` library for advanced use within Python, but also installs a convenience executable by the same name, so you can run it directly from the command line.
 
 # Usage
 
@@ -32,13 +32,28 @@ This will install the `slackclipper` library for advanced use within Slack, but 
 3. Paste the result into the destination of your choice.
 ![Screenshot of content pasted into MacDown](img/screenshot_paste-into-MacDown.png)
 
+## Extracting Slack Credentials
+
+When `slackclipper` is run for the first time, it will attempt to extract your Slack credentials using `slacktokens`. You may be prompted for your password.
+
+If extraction is successful, these credentials will be stored (in `~/.config/slackclipper/`) for future use. To replace the store with freshly extracted credentials, run `slackclipper` with the `-u` or `-update-credentials` flag.
+
+---
+
 
 # Shortcomings
 
+- `slackclipper` relies on `slacktokens` to extract your Slack credentials. `slacktokens` currently only supports macOS and Linux.
+	- If credentials extraction fails for this or any other reason, credentials can be provided manually using Python like so:
+
+		```python
+		>>> from slackclipper import update_credentials_store
+		>>> update_credentials_store(creds) # where "creds" is in the format produced by slacktokens
+		```
 - Message authors are given as a user ID. This is easy to improve by doing a user lookup to turn them into a useful name.
 - Timestamps are not yet included in the output. Just need to come up with a suitable format.
 - Some things aren't formatted well. For example:
 	- links are oddly formatted;
 	- mentions and emoticons aren’t;
 	- and multimedia won’t come through well.
-- Only exports to MarkDown for now.
+- Only exports in MarkDown format for now.
