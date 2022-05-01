@@ -190,20 +190,3 @@ def get_thread_content(link):
     ret += f"**{m['user']}**\n{m['text']}\n\n"
   
   return ret
-
-
-def main():
-  # Tried the tkinter method but it was rough as guts.
-  # No big deal to have this dependency.
-  from pyperclip import copy, paste
-  
-  try:
-    link = paste()
-    print(f"Clipping thread for link: {link}")
-    content = get_thread_content(paste())
-    copy(content)
-    print("Done. Results are on the clipboard ready to be pasted wherever you like.")
-  except Exception as e:
-    print(f"Failed. Details of error are below.")
-    print(str(e))
-    #raise # for debugging
