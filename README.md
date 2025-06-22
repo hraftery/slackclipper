@@ -19,6 +19,10 @@ By default the clipped content will be neatly formatted in Markdown. But the dat
 
 # Installation
 
+**Note:** requires Python 3.11 or earlier! This is a limitation of the `leveldb` package, which is used by the `slacktokens` dependency. The restriction is now enforced by the packaging, but pip and friends provide confusing error messages like "these package versions have conflicting dependencies.
+
+With a compatible version of Python installed, just run:
+
     pip install slackclipper
 
 This will install the `slackclipper` library for advanced use within Python, but also installs a convenience executable by the same name, so you can run it directly from the command line.
