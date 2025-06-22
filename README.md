@@ -50,7 +50,6 @@ If extraction is successful, these credentials will be stored (in `~/.config/sla
 		>>> from slackclipper import update_credentials_store
 		>>> update_credentials_store(creds) # where "creds" is in the format produced by slacktokens
 		```
-- Message authors are given as a user ID. This is easy to improve by doing a user lookup to turn them into a useful name.
 - Timestamps are not yet included in the output. Just need to come up with a suitable format.
 - Some things aren't formatted well. For example:
 	- links are oddly formatted;
