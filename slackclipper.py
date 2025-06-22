@@ -137,16 +137,14 @@ def parse_slack_message_link(link):
 
 
 def get_thread_content(link):
-  """Query the Slack API for the content of the thread containing the message with the link provided.
-    
+  """Get the content of the thread containing the message with the link provided.
+  
   :param link: a string containing the message link
   :returns: a string containing the thread content as Markdown
   :raises RuntimeError: failed to query the Slack API. Associated value says why.
   :raises ValueError: unable to parse the link provided. Associated value says why.
   :raises KeyError: unable to find token for the Slack workspace in the link.
   """
-  import requests
-  from urllib.parse import urlunparse, urlencode
   
   if not are_credentials_present():
     raise RuntimeError("No Slack API credentials found. See update_credentials_store().")
@@ -157,10 +155,30 @@ def get_thread_content(link):
   # might raise KeyError, which we pass on unaltered
   token, cookie = get_token_and_cookie_for_workspace(workspace)
 
-  scheme = "https"
-  netloc = "slack.com"
-  path = "/api/conversations.replies"
-  params = ""
+  messages = get_messages(token, cookie, channel, timestamp)
+
+  # do `jq -r '.messages[] | "**\(.user)**\n\(.text)\n"'`
+  ret = ""
+  for m in messages:
+    name = get_display_name(token, cookie, m['user'])
+    ret += f"**{name}**\n{m['text']}\n\n"
+  
+  return ret
+
+
+def get_messages(token, cookie, channel, timestamp):
+  """Query the Slack API for the messages in the thread with the timestamp provided.
+    
+  :param token: as produced by get_token_and_cookie_for_workspace()
+  :param cookie: as produced by get_token_and_cookie_for_workspace()
+  :param channel: as produced by parse_slack_message_link()
+  :param timestamp: as produced by parse_slack_message_link()
+  :returns: the "messages" value of the JSON returned by the Slack API
+  :raises RuntimeError: failed to query the Slack API. Associated value says why.
+  """
+  import requests
+  from urllib.parse import urlunparse, urlencode
+
   query = urlencode({'token': token, 'channel': channel, 'ts': timestamp},
                     quote_via=lambda string, *_:string) # avoid encoding already encoded params
 
@@ -182,11 +200,61 @@ def get_thread_content(link):
     raise RuntimeError(f"Slack API returned invalid JSON. Got {r.text}") from e
 
   if not data['ok']:
-    raise RuntimeError(f"Slack API return JSON with an \"ok\" flag. Got {data}.")
+    raise RuntimeError(f"Slack API returned JSON without an \"ok\" flag. Got: " + str(data))
 
-  # do `jq -r '.messages[] | "**\(.user)**\n\(.text)\n"'`
-  ret = ""
-  for m in data['messages']:
-    ret += f"**{m['user']}**\n{m['text']}\n\n"
+  return data['messages']
+
+# Create globals, just so we can use @functools.cache on get_display_name, 
+# which would otherwise bork with "unhashable type: 'dict'".
+gToken = None
+gCookie = None
+def get_display_name(token, cookie, user):
+  """Query the Slack API (or a local cache) for the display name of the given user
   
-  return ret
+  :param token: as produced by get_token_and_cookie_for_workspace()
+  :param cookie: as produced by get_token_and_cookie_for_workspace()
+  :param user: the 'user' field of a conversations.replies API call
+  :returns: a string containing the display name field of the user record
+  :raises RuntimeError: failed to query the Slack API. Associated value says why.
+  """
+  global gToken
+  global gCookie
+  gToken = token
+  gCookie = cookie
+  return get_display_name_with_cache(user)
+
+import functools
+@functools.cache
+def get_display_name_with_cache(user):
+  """Helper function for get_display_name(). Do no call directly.
+  """
+  import requests
+  from urllib.parse import urlunparse, urlencode
+
+  global gToken
+  global gCookie
+
+  query = urlencode({'token': gToken, 'user': user},
+                    quote_via=lambda string, *_:string) # avoid encoding already encoded params
+  
+  try:
+    r =  requests.get("https://slack.com/api/users.info",
+                      params = query, # requests handles dicts, but passing a string instead skips encoding
+                      cookies= { gCookie['name']: gCookie['value'] })
+  except Exception as e:
+    raise RuntimeError("Failed to query Slack API: " + str(e)) from e
+
+  try:
+    r.raise_for_status()
+  except Exception as e:
+    raise RuntimeError("Slack API returned invalid HTTP status.") from e
+  
+  try:
+    data = r.json()
+  except Exception as e:
+    raise RuntimeError(f"Slack API returned invalid JSON. Got {r.text}") from e
+
+  if not data['ok']:
+    raise RuntimeError(f"Slack API returned JSON without an \"ok\" flag. Got: " + str(data))
+
+  return data['user']['profile']['display_name']
