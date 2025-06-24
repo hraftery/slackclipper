@@ -27,8 +27,9 @@ dependencies = [
 # slacktokens takes care of leveldb and pycookiecheat-slack dependencies.
 # It's a sister project (they're growing up together), so safe to require latest.
     "slacktokens",
-    "requests==2.27.1",
-    "pyperclip==1.8.2"
+    "requests==2.27.1", # for calling the Slack API
+    "pyperclip==1.8.2", # for accessing the clipboard
+    "emoji==2.14.1"     # for turning :emoji: into their glyphs.
 ]
 
 [tool.setuptools]

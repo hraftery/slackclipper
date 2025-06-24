@@ -161,7 +161,9 @@ def get_thread_content(link):
   ret = ""
   for m in messages:
     name = get_display_name(token, cookie, m['user'])
-    ret += f"**{name}**\n{m['text']}\n\n"
+    timestamp = slack_ts_to_datetime_str(m['ts'])
+    text = slack_text_to_markdown(m['text'])
+    ret += f"**{name or 'Anonymous'}, at {timestamp}:**\n{text}\n\n"
   
   return ret
 
@@ -260,3 +262,82 @@ def get_display_name_with_cache(user):
   # I don't know why but display_name is often blank. real_name looks like a good fall back.
   return data['user']['profile']['display_name'] or data['user']['profile']['real_name']
 
+
+def slack_ts_to_datetime_str(ts_str):
+  """Convert a Slack API ts value into a human-readable date-time string.
+
+  The format of the ts field is obscure, but explained here:
+  https://stackoverflow.com/a/77376854/3697870
+
+  Essentially it is "<unix time>.<unique sequence number>".
+  
+  :param ts_str: the string as appears in a Slack API response.
+  :returns: a string containing the timestamp in "YYYY-MM-DD HH:MM:SS" format
+  :raises ValueError: input could not be parsed
+  """
+  from datetime import datetime, timezone
+
+  unix_time_str = ts_str.partition('.')[0]
+
+  try:
+    unix_time = int(unix_time_str)
+    datetime_str = datetime.fromtimestamp(unix_time, timezone.utc) \
+                           .strftime('%Y-%m-%d %H:%M:%S')
+  except Exception as e:
+    raise ValueError("Input could not be parsed: " + str(e)) from e
+  
+  return datetime_str
+
+def slack_text_to_markdown(text):
+  """Parse a Slack API text value, converting links and references into Markdown.
+
+  Surprisingly, the text value turns out to be in a format that Slack call `mrkdwn`:
+  https://api.slack.com/reference/surfaces/formatting
+
+  Not confusingly at all, it's like Markdown, except without the vowels and also
+  a bit different. For example, bold is single '*', italic is single '_', urls are
+  in <url|text> format, emoji are in :colon: format, links to channels are <#channel>,
+  mentions are <@user_id>, and '&', '<' and '>' are escaped to their HTML entities.
+  
+  :param text: the string as appears in a Slack API response.
+  :returns: the same as `text`, except urls are in Markdown format, user_ids are
+            converted to display names, channel links and mentions are turned into
+            links (only for formatting - they don't have a url), emoji are emojized,
+            and escapes are unescaped.
+  :raises ValueError: input could not be parsed
+  """
+  import re
+  import emoji
+
+  def mention_match_to_display_name(match):
+    # We assume get_display_name() has already been called so we can use the globals
+    global gToken
+    global gCookie
+    if gToken == None or gCookie == None:
+      raise RuntimeError("get_display_name() called out of order. This is a bug.")
+
+    s = match.group(1) #.partition('|')[0] # often there's an empty | field after the id
+    s = get_display_name(gToken, gCookie, s)
+    return f"[@{s}]"
+
+  def asterisk_match_to_bold(match):
+    if match.group(0).startswith('`') and match.group(0).endswith('`'):
+      return match.group(0) # Ignore if within code block
+    else:
+      return "**" # Otherwise turn mrkdwn bold into Markdown bold
+
+  # Unfortunately, it looks like whether the asterisk marks a bold section or not
+  # is lost in the text we get from the Slack API. Even checking the asterisk is
+  # next to a word doesn't seem to help. So the best we can do is convert them
+  # all, even though some might just be a literal asterisk.
+  text = re.sub(r"`.*?`|\*", asterisk_match_to_bold, text) # bold
+  # Alas channels are specified by ID, not name, so these look a bit crap for now.
+  text = re.sub(r"<#(.*?)>", r"[#\1]", text) # channel links
+  text = re.sub(r"<@(.*?)>", mention_match_to_display_name, text) # mentions
+  text = re.sub(r"<(.*?)\|(.*?)>", r"[\2](\1)", text) # URLS
+  text = emoji.emojize(text, language='alias') # :emoji: to their glyphs
+  text = text.replace("&amp;", "&") # & escape
+  text = text.replace("&lt;", "<") # < escape
+  text = text.replace("&gt;", ">") # > escape
+
+  return text
