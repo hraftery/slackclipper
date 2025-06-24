@@ -74,9 +74,6 @@ mv chrome.py "$PACKAGE_PATH/chrome.py"
 		>>> from slackclipper import update_credentials_store
 		>>> update_credentials_store(creds) # where "creds" is in the format produced by slacktokens
 		```
-- Timestamps are not yet included in the output. Just need to come up with a suitable format.
-- Some things aren't formatted well. For example:
-	- links are oddly formatted;
-	- mentions and emoticons aren’t;
-	- and multimedia won’t come through well.
-- Only exports in MarkDown format for now.
+- Multimedia won’t come through well.
+- Reactions aren't included.
+- Only exports in a fixed MarkDown format for now.
