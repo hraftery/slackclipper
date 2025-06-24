@@ -78,15 +78,18 @@ try:
   else:
     link = paste()
   
-  if not link_validator(link):
+  while not link_validator(link):
     if args.pipe:
       raise ValueError(f"No valid link found in stdin. Found: {link[:200]}")
     
     print("Clipboard does not seem to contain a link.")
     print("Either copy a link to the clipboard and enter 'y', or enter 'n' to quit.")
     reply = str(input("Would you like to try again? (y/n): ")).lower().strip()
-    if reply[0] == 'n':
+    if not reply or reply[0] == 'n':
       sys.exit(0)
+    
+    link = paste()
+    print("")
   
   if not args.pipe:
     print(f"Clipping thread for link: {link[:200]}")
