@@ -42,6 +42,26 @@ When `slackclipper` is run for the first time, it will attempt to extract your S
 
 If extraction is successful, these credentials will be stored (in `~/.config/slackclipper/`) for future use. To replace the store with freshly extracted credentials, run `slackclipper` with the `-u` or `-update-credentials` flag.
 
+## Support for non-App Store Slack on MacOS
+
+Support for when Slack is directly downloaded and installed, instead of installed through the Mac App Store, is broken in the current release version of the dependency `pycookiecheat`. However the fix has been merged into the repository. To apply it, you can do something like:
+
+```
+# Download the current version of the source file
+curl -L https://raw.githubusercontent.com/n8henrie/pycookiecheat/refs/heads/master/src/pycookiecheat/chrome.py -o chrome.py
+
+# Get the location of the pycookiecheat package on your computer
+# Replace `python3` with the python you used to install slackclipper. Eg `python3.11`.
+PACKAGE_PATH=$(python3 -c "import pycookiecheat, os; print(os.path.dirname(pycookiecheat.__file__))")
+
+# Dry run to make sure the replacement is good. You should see a diff like that in the commit:
+# https://github.com/n8henrie/pycookiecheat/commit/36f72082e9a6a77cf84c5000150e7f779d73b14d
+diff chrome.py "$PACKAGE_PATH/chrome.py"
+
+# Do the replacement
+mv chrome.py "$PACKAGE_PATH/chrome.py"
+```
+
 ---
 
 
