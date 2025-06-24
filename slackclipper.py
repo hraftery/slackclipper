@@ -226,7 +226,7 @@ def get_display_name(token, cookie, user):
 import functools
 @functools.cache
 def get_display_name_with_cache(user):
-  """Helper function for get_display_name(). Do no call directly.
+  """Helper function for get_display_name(). Do not call directly.
   """
   import requests
   from urllib.parse import urlunparse, urlencode
@@ -257,4 +257,6 @@ def get_display_name_with_cache(user):
   if not data['ok']:
     raise RuntimeError(f"Slack API returned JSON without an \"ok\" flag. Got: " + str(data))
 
-  return data['user']['profile']['display_name']
+  # I don't know why but display_name is often blank. real_name looks like a good fall back.
+  return data['user']['profile']['display_name'] or data['user']['profile']['real_name']
+
